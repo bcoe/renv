@@ -123,7 +123,7 @@ REnv.prototype.getEnvironment = function(key, cb) {
             node.nodes.forEach(node => {nodes.push(node)});
           } else {
             if (node.dir) node.value = {};
-            traverse(environment).set(node.key.replace(key, '').split('/'), node.value);
+            traverse(environment).set(node.key.replace(key, '').split('/'), node.value || '');
           }
         }
 
