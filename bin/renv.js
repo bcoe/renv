@@ -9,9 +9,11 @@ var _ = require('lodash'),
   chalk = require('chalk'),
   columnify = require('columnify'),
   command = null,
+  inquirer = require('inquirer'),
   REnv = require('../'),
   renv = null,
   util = require('util'),
+  traverse = require('traverse'),
   width = Math.min(require('window-size').width || 80, 80);
   options = {
     environment: {
@@ -65,12 +67,16 @@ var _ = require('lodash'),
             alias: 'output',
             default: 'console',
             description: "how should the config be output (either json, or console)"
+          },
+          'k': {
+            alias: 'key',
+            description: "output configuration for a key on an inner object"
           }
         }, options))
         .example('$0 config -e production', 'returns a list of config variables for the production environment')
         .argv;
 
-      printEnvironment();
+      printEnvironment(null, argv.key);
     },
     'config:set': function() {
       yargs.reset()
@@ -127,12 +133,17 @@ var _ = require('lodash'),
         .usage('$0 config:import /path/to/file.json [options]')
         .demand(2, chalk.red('must provide path to JSON file'))
         .example('$0 config:import ./foo.json', 'load foo.json into default environment and app')
-        .options(options)
+        .options(_.extend(options, {
+          'k': {
+            alias: 'key',
+            description: "output configuration for a key on an inner object"
+          }
+        }))
         .argv;
 
       try {
         var json = require(path.resolve(argv._[1]))
-        renv.setObject(json);
+        renv.setObject(json, argv.key);
         console.log(chalk.bold('imported:'), util.inspect(json, {colors: true}));
       } catch (err) {
         console.log(chalk.red(err.message));
@@ -147,13 +158,23 @@ var _ = require('lodash'),
         .options(options)
         .argv;
 
-      renv.deleteEnvironment()
-        .then(function() {
-          console.log(chalk.bold('destroyed: ') + chalk.red('/' + argv.application + '/' + argv.environment));
-        })
-        .catch(function(err) {
-          console.log(chalk.red(err.message));
-        });
+      inquirer.prompt([{
+        type: 'confirm',
+        name: 'nuke',
+        message: 'are you sure you want to destroy ' + chalk.bold(argv.application + '/' + argv.environment)
+      }], function( answers ) {
+        if (answers.nuke) {
+          renv.deleteEnvironment()
+            .then(function() {
+              console.log(chalk.bold('destroyed: ') + chalk.red('/' + argv.application + '/' + argv.environment));
+            })
+            .catch(function(err) {
+              console.log(chalk.red(err.message));
+            });
+        } else {
+          console.error(chalk.red('aborted'));
+        }
+      });
     },
     'config:dump': function() {
       argv = yargs.reset()
@@ -205,16 +226,20 @@ if (command && commands[command]) {
 }
 
 // recursively print an environment.
-function printEnvironment(key) {
+function printEnvironment(key, path) {
   renv.getEnvironment(key)
     .then(function(environment) {
+      // print sub-objects in an environment.
+      if (path) environment = traverse(environment).get(path.split('.'));
+      path = path ? '.' + path : '';
+
       if (argv.output === 'json') {
         console.log(JSON.stringify(environment, null, 2));
       } else {
         environment = _.mapValues(environment, function(v) {
           return util.inspect(v, {colors: true});
         });
-        console.log(chalk.blue('==> ') + chalk.bold(renv.environment));
+        console.log(chalk.blue('==> ') + chalk.bold(renv.environment + path));
         console.log(columnify(environment, {showHeaders: false, config: {
           key: {minWidth: parseInt(width * 0.4), maxWidth: parseInt(width * 0.4)},
           value: {minWidth: parseInt(width * 0.6), maxWidth: parseInt(width * 0.6)},

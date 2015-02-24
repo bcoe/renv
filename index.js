@@ -133,12 +133,17 @@ REnv.prototype.getEnvironment = function(key, cb) {
   }).nodeify(cb);
 };
 
-REnv.prototype.setObject = REnv.prototype.setEnvironment = function(obj, cb) {
+REnv.prototype.setObject = REnv.prototype.setEnvironment = function(obj, prefix, cb) {
   var paths = traverse(obj).paths();
+
+  if (typeof prefix === 'function') [cb, prefix] = [prefix, cb];
+  if (prefix) prefix = prefix.split('.').join('/');
 
   return Promise.each(paths, path => {
     var key = path.join('/'),
       value = traverse(obj).get(path);
+
+    if (prefix) key = prefix + '/' + key;
 
     if (typeof value === 'object') {
       return this.mkdir(key, '');
@@ -154,14 +159,30 @@ REnv.prototype.del = function(key, cb) {
       _.map(key, k => {return this.del(k);})
     );
   } else {
-    return this._del(key, {recursive: true})
+    return this._del(key.split('.').join('/'), {recursive: true})
       .nodeify(cb);
   }
 };
 
 // delete all keys in the environment.
 REnv.prototype.deleteEnvironment = function(cb) {
-  return this._del('', {recursive: true}).nodeify(cb);
+  var _this = this;
+
+  return this._del('', {recursive: true})
+    .catch(function() {})
+    .then(function() {
+      return _this.getEnvironment('/' + _this.application + '/');
+    })
+    .then(function(environment) {
+      if (!Object.keys(environment).length) {
+        return _this._del('', {
+          overridePath: '/' + _this.application,
+          recursive: true
+        });
+      }
+    })
+    .catch(function(err) {})
+    .nodeify(cb);
 };
 
 // helper used by delete and delete environment.
@@ -170,7 +191,7 @@ REnv.prototype._del = function(key, opts) {
     path = this._buildKey() + key;
 
   return new Promise(function(resolve, reject) {
-    _this.client.delete(path, opts, function(err, result) {
+    _this.client.delete(opts.overridePath || path, opts, function(err, result) {
       if (err) reject(err);
       else resolve(result);
     });
