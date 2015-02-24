@@ -1,0 +1,57 @@
+{
+  "name": "renv",
+  "version": "1.0.0",
+  "description": "a command line interface for managing remote configuration, powered by etcd",
+  "main": "renv.js",
+  "scripts": {
+    "test": "mocha --check-leaks --ui exports --timeout 5000 --require blanket -R mocoverage",
+    "pretest": "babel index.js > renv.js",
+    "prepublish": "babel index.js > renv.js"
+  },
+  "config": {
+    "blanket": {
+      "pattern": "renv.js",
+      "data-cover-never": [
+        "node_modules",
+        "test"
+      ],
+      "output-reporter": "spec"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:bcoe/ndm-etcd.git"
+  },
+  "keywords": [
+    "etcd",
+    "configuration",
+    "config",
+    "ndm"
+  ],
+  "author": "Ben Coe <ben@npmjs.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bcoe/ndm-etcd/issues"
+  },
+  "homepage": "https://github.com/bcoe/ndm-etcd",
+  "dependencies": {
+    "bluebird": "^2.9.12",
+    "chalk": "^0.5.1",
+    "columnify": "^1.4.1",
+    "lodash": "^3.3.0",
+    "node-etcd": "^3.0.2",
+    "quack-array": "0.0.1",
+    "traverse": "^0.6.6",
+    "window-size": "^0.1.0",
+    "yargs": "^3.3.1"
+  },
+  "devDependencies": {
+    "babel": "^4.4.3",
+    "blanket": "^1.1.6",
+    "chai": "^2.0.0",
+    "coveralls": "^2.11.2",
+    "mocha": "^2.1.0",
+    "mocha-lcov-reporter": "0.0.1",
+    "mocoverage": "^1.0.0"
+  }
+}
