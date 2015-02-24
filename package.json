@@ -1,6 +1,6 @@
 {
   "name": "renv",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "a command line interface for managing remote configuration, powered by etcd",
   "main": "renv.js",
   "scripts": {
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:bcoe/ndm-etcd.git"
+    "url": "git@github.com:bcoe/renv.git"
   },
   "keywords": [
     "etcd",
@@ -32,9 +32,9 @@
   "author": "Ben Coe <ben@npmjs.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/bcoe/ndm-etcd/issues"
+    "url": "https://github.com/bcoe/renv/issues"
   },
-  "homepage": "https://github.com/bcoe/ndm-etcd",
+  "homepage": "https://github.com/bcoe/renv",
   "dependencies": {
     "bluebird": "^2.9.12",
     "chalk": "^0.5.1",
