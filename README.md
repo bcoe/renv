@@ -11,6 +11,10 @@ renv gives you:
 * a heroku-inspired interface (`config:set`, `config:unset`).
 * tools for managing your environment using JSON configuration files (`config:import`).
 
+## Installation
+
+`npm install renv -g`
+
 ## Core Concepts
 
 ### config paths
