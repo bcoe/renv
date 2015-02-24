@@ -1,6 +1,6 @@
 {
   "name": "renv",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a command line interface for managing remote configuration, powered by etcd",
   "main": "renv.js",
   "scripts": {
@@ -8,6 +8,7 @@
     "pretest": "babel index.js > renv.js",
     "prepublish": "babel index.js > renv.js"
   },
+  "bin": "./bin/renv.js",
   "config": {
     "blanket": {
       "pattern": "renv.js",
