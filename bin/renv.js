@@ -10,6 +10,10 @@ var _ = require('lodash'),
   columnify = require('columnify'),
   command = null,
   inquirer = require('inquirer'),
+  rc = require('rc')('renv', {
+    hosts: '127.0.0.1:4001',
+    ssl: false
+  }, []),
   REnv = require('../'),
   renv = null,
   util = require('util'),
@@ -30,7 +34,12 @@ var _ = require('lodash'),
       alias: 'host',
       array: true,
       description: 'list of etcd host:port pairs',
-      default: '127.0.0.1:4001'
+      default: rc.hosts
+    },
+    'ssl': {
+      default: rc.ssl,
+      boolean: true,
+      description: 'etcd server is SSL'
     },
     'ca-path': {
       array: true,
@@ -101,6 +110,7 @@ var _ = require('lodash'),
         })
         .catch(function(err) {
           console.error(chalk.red(err.message));
+          process.exit(1);
         });
     },
     'config:unset': function() {
@@ -124,6 +134,7 @@ var _ = require('lodash'),
         })
         .catch(function(err) {
           console.error(chalk.red(err.message));
+          process.exit(1);
         });
     },
     'config:import': function() {
@@ -170,9 +181,11 @@ var _ = require('lodash'),
             })
             .catch(function(err) {
               console.log(chalk.red(err.message));
+              process.exit(1);
             });
         } else {
           console.error(chalk.red('aborted'));
+          process.exit(1);
         }
       });
     },
@@ -199,7 +212,7 @@ argv = yargs.argv;
 command = argv._[0];
 
 if (command && commands[command]) {
-  var ssloptions = {};
+  var ssloptions = null;
 
   if (argv['cert-path'] && argv['key-path']) {
     ssloptions = {
@@ -209,6 +222,8 @@ if (command && commands[command]) {
       cert: fs.readFileSync(path.resolve(argv['cert-path'])),
       key: fs.readFileSync(path.resolve(argv['key-path']))
     };
+  } else if (argv.ssl) {
+    ssloptions = {};
   }
 
   renv = new REnv({
@@ -247,6 +262,8 @@ function printEnvironment(key, path) {
       }
     })
     .catch(function(err) {
+      console.log(JSON.stringify(err));
       console.log(chalk.red(err.message));
+      process.exit(1);
     });
 }

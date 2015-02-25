@@ -10,7 +10,7 @@ function REnv(opts) {
     environment: 'development',
     etcd: {
       hosts: ['127.0.0.1:4001'],
-      ssloptions: {}
+      ssloptions: null
     }
   }, opts);
 
@@ -21,7 +21,7 @@ function REnv(opts) {
 REnv.prototype.createClient = function() {
   return new Etcd(
     this.etcd.hosts,
-    Object.keys(this.etcd.ssloptions).length ? this.etcd.ssloptions : undefined
+    this.etcd.ssloptions ? this.etcd.ssloptions : undefined
   );
 };
 
