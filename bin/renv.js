@@ -10,6 +10,10 @@ var _ = require('lodash'),
   columnify = require('columnify'),
   command = null,
   inquirer = require('inquirer'),
+  rc = require('rc')('renv', {
+    hosts: '127.0.0.1:4001',
+    ssl: false
+  }, []),
   REnv = require('../'),
   renv = null,
   util = require('util'),
@@ -30,7 +34,12 @@ var _ = require('lodash'),
       alias: 'host',
       array: true,
       description: 'list of etcd host:port pairs',
-      default: '127.0.0.1:4001'
+      default: rc.hosts
+    },
+    'ssl': {
+      default: rc.ssl,
+      boolean: true,
+      description: 'etcd server is SSL'
     },
     'ca-path': {
       array: true,
@@ -63,20 +72,24 @@ var _ = require('lodash'),
         .help('h')
         .alias('h', 'help')
         .options(_.extend({
-          'o': {
-            alias: 'output',
+          'f': {
+            alias: 'format',
             default: 'console',
             description: "how should the config be output (either json, or console)"
           },
           'k': {
             alias: 'key',
             description: "output configuration for a key on an inner object"
+          },
+          'o': {
+            alias: 'output',
+            description: "output configuration to a file, rather than standard out"
           }
         }, options))
         .example('$0 config -e production', 'returns a list of config variables for the production environment')
         .argv;
 
-      printEnvironment(null, argv.key);
+      printEnvironment(null, argv.key, argv.output);
     },
     'config:set': function() {
       yargs.reset()
@@ -101,6 +114,7 @@ var _ = require('lodash'),
         })
         .catch(function(err) {
           console.error(chalk.red(err.message));
+          process.exit(1);
         });
     },
     'config:unset': function() {
@@ -124,6 +138,7 @@ var _ = require('lodash'),
         })
         .catch(function(err) {
           console.error(chalk.red(err.message));
+          process.exit(1);
         });
     },
     'config:import': function() {
@@ -170,9 +185,11 @@ var _ = require('lodash'),
             })
             .catch(function(err) {
               console.log(chalk.red(err.message));
+              process.exit(1);
             });
         } else {
           console.error(chalk.red('aborted'));
+          process.exit(1);
         }
       });
     },
@@ -199,7 +216,7 @@ argv = yargs.argv;
 command = argv._[0];
 
 if (command && commands[command]) {
-  var ssloptions = {};
+  var ssloptions = null;
 
   if (argv['cert-path'] && argv['key-path']) {
     ssloptions = {
@@ -209,6 +226,8 @@ if (command && commands[command]) {
       cert: fs.readFileSync(path.resolve(argv['cert-path'])),
       key: fs.readFileSync(path.resolve(argv['key-path']))
     };
+  } else if (argv.ssl) {
+    ssloptions = {};
   }
 
   renv = new REnv({
@@ -226,15 +245,17 @@ if (command && commands[command]) {
 }
 
 // recursively print an environment.
-function printEnvironment(key, path) {
+function printEnvironment(key, path, outputFile) {
   renv.getEnvironment(key)
     .then(function(environment) {
       // print sub-objects in an environment.
       if (path) environment = traverse(environment).get(path.split('.'));
       path = path ? '.' + path : '';
 
-      if (argv.output === 'json') {
-        console.log(JSON.stringify(environment, null, 2));
+      if (argv.format === 'json') {
+        var json = JSON.stringify(environment, null, 2);
+        if (outputFile) fs.writeFileSync(outputFile, json, 'utf-8');
+        else console.log(JSON.stringify(environment, null, 2));
       } else {
         environment = _.mapValues(environment, function(v) {
           return util.inspect(v, {colors: true});
@@ -247,6 +268,8 @@ function printEnvironment(key, path) {
       }
     })
     .catch(function(err) {
+      console.log(JSON.stringify(err));
       console.log(chalk.red(err.message));
+      process.exit(1);
     });
 }

@@ -38,6 +38,15 @@ This is cool because:
 * you can listen for changes on individual keys.
 * you can modify keys atomically.
 
+### .renvrc
+
+Use a .renvrc to store information about your production etcd host:
+
+```ini
+hosts=etcd.example.com:443
+ssl=true
+```
+
 ## The Interface
 
 ### config
