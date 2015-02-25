@@ -1,6 +1,6 @@
 {
   "name": "renv",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "a command line interface for managing remote configuration, powered by etcd",
   "main": "renv.js",
   "scripts": {
