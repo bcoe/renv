@@ -186,6 +186,22 @@ describe('Renv', function() {
           return done();
         }).done();
     });
+
+    it('allows a key to be deleted based on dot notation', function(done) {
+      renv.setObject({FOO: {BAR: '33', SNUH: 'apple'}})
+        .then(function() {
+          return renv.del('FOO.SNUH');
+        })
+        .then(function() {
+          return renv.getEnvironment();
+        })
+        .then(function(environment) {
+          environment.should.deep.equal({
+            FOO: {BAR: '33'}
+          });
+          return done();
+        }).done();
+    });
   });
 
   describe('setObject', function() {
@@ -231,12 +247,36 @@ describe('Renv', function() {
     it('handles encoding large real-world JSON file', function(done) {
       var obj = require('./fixtures/service');
 
-      renv.setObject(obj)
+      renv.setObject(obj, function(err) {
+        renv.getEnvironment(function(err, environment) {
+          environment.should.deep.equal(obj);
+          return done();
+        });
+      });
+    });
+
+    it('allows a key to be set to an object', function(done) {
+      var obj = require('./fixtures/service');
+
+      renv.setObject(obj, 'foo')
         .then(function() {
           return renv.getEnvironment();
         })
         .then(function(environment) {
-          environment.should.deep.equal(obj);
+          environment.foo.should.deep.equal(obj);
+          return done();
+        }).done();
+    });
+
+    it('allows an inner key to be set with dot notation', function(done) {
+      var obj = require('./fixtures/service');
+
+      renv.setObject(obj, 'foo.bar')
+        .then(function() {
+          return renv.getEnvironment();
+        })
+        .then(function(environment) {
+          environment.foo.bar.should.deep.equal(obj);
           return done();
         }).done();
     });

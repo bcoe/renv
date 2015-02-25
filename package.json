@@ -39,6 +39,7 @@
     "bluebird": "^2.9.12",
     "chalk": "^0.5.1",
     "columnify": "^1.4.1",
+    "inquirer": "^0.8.0",
     "lodash": "^3.3.0",
     "node-etcd": "^3.0.2",
     "quack-array": "0.0.1",
