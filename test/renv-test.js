@@ -11,7 +11,9 @@ describe('Renv', function() {
 
   beforeEach(function(done) {
     renv.deleteEnvironment(function(err) {
-      return done();
+      renv2.deleteEnvironment(function(err) {
+        return done();
+      });
     })
   });
 
@@ -281,4 +283,38 @@ describe('Renv', function() {
         }).done();
     });
   });
+
+  describe('merge', function() {
+    it('can merge one renv environment into another', function(done) {
+      renv.set('FOO', 'bar')
+        .then(function() {
+          return renv2.set('BAR', 'snuh');
+        })
+        .then(function() {
+          return renv.merge(renv2);
+        })
+        .then(function(env) {
+          env.FOO.should.equal('bar');
+          env.BAR.should.equal('snuh');
+          return done();
+        });
+    });
+
+    it('handles merging deep keys', function(done) {
+      renv.setObject({service: {bar: 'apple', foo: 'cat'}})
+        .then(function() {
+          return renv2.setObject({service: {bar: 'banana', blerg: 'snuh'}});
+        })
+        .then(function() {
+          return renv.merge(renv2);
+        })
+        .then(function(env) {
+          env.service.bar.should.equal('banana');
+          env.service.foo.should.equal('cat');
+          env.service.blerg.should.equal('snuh')
+          return done();
+        });
+    });
+  });
+
 });
