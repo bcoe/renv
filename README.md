@@ -8,8 +8,8 @@ A dead simple command line interface for managing remote configuration. Powered 
 
 renv gives you:
 
-* a heroku-inspired interface (`config:set`, `config:unset`).
-* tools for managing your environment using JSON configuration files (`config:import`).
+* a heroku-inspired interface (`set`, `unset`).
+* tools for managing your environment using JSON configuration files (`import`).
 
 ## Installation
 
@@ -57,50 +57,58 @@ Use `--output json`, to dump the configuration to disk:
 
 `renv config --environment production --output json > service.json`.
 
-### config:set
+### set
 
 Set a single configuration variable:
 
-`renv config:set URL=http://www.example.com`
+`renv set URL=http://www.example.com`
 
 Set multiple configuration variables:
 
-`renv config:set URL=http://www.example.com TIMEOUT=5000`
+`renv set URL=http://www.example.com TIMEOUT=5000`
 
 Creating or updating an object:
 
-`renv config:set OBJ.x 33 OBJ.y 99`
+`renv set OBJ.x 33 OBJ.y 99`
 
 Creating or updating an array:
 
-`renv config:set ARR.0 33 ARR.1 99`
+`renv set ARR.0 33 ARR.1 99`
 
-### config:unset
+### unset
 
 Delete a single configuration variable:
 
-`renv config:unset OBJ`
+`renv unset OBJ`
 
 Delete multiple configuration variables:
 
-`renv config:unset OBJ ARR`
+`renv unset OBJ ARR`
 
-### config:import
+### import
 
 Import a JSON file and create keys and directories recursively.
 
-`renv config:import ./test/fixtures/service.json`
+`renv import ./test/fixtures/service.json`
 
-### config:nuke
+### nuke
 
 nuke all configuration for the current `application` and `environment`
 
 __Danger, Will Robinson.__
 
-`renv config:nuke`
+`renv nuke`
 
-### config:dump
+### dump
 
 Dump configuration for all applications and environments:
 
-`renv config:dump`
+`renv dump`
+
+### merge
+
+Merge two configuration environments, useful if production servers only
+vary slightly.
+
+
+`renv merge --application2 production-server-east`
