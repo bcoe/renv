@@ -1,5 +1,6 @@
 var _ = require('lodash'),
   Etcd = require('node-etcd'),
+  extend = require('deep-extend'),
   Promise = require('bluebird'),
   traverse = require('traverse'),
   quack = require('quack-array');
@@ -196,6 +197,22 @@ REnv.prototype._del = function(key, opts) {
       else resolve(result);
     });
   });
+};
+
+// merge one renv environment into another.
+REnv.prototype.merge = function(renv2, cb) {
+  var _this = this,
+    environment1 = null;
+
+  return this.getEnvironment()
+    .then(function(environment) {
+      environment1 = environment;
+      return renv2.getEnvironment();
+    })
+    .then(function(environment2) {
+      return extend(environment1, environment2);
+    })
+    .nodeify(cb);
 };
 
 module.exports = REnv;

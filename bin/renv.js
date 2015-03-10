@@ -55,11 +55,13 @@ var _ = require('lodash'),
   yargs = require('yargs')
     .usage('$0 <command> [options]')
     .command('config', 'list all variables in /:application/:environment')
-    .command('config:set', 'set an environment variable')
-    .command('config:unset', 'delete an environment variable')
-    .command('config:import', 'import configuration from a JSON file')
-    .command('config:nuke', 'delete configuration for current application and environment')
-    .command('config:dump', 'dump configuration for all applications and environments')
+    .command('set', 'set an environment variable')
+    .command('unset', 'delete an environment variable')
+    .command('import', 'import configuration from a JSON file')
+    .command('nuke', 'delete configuration for current application and environment')
+    .command('dump', 'dump configuration for all applications and environments')
+    .command('merge', 'merge the configuration for two applications')
+    .completion('completion')
     .alias('h', 'help')
     .version(function() { return require('../package').version })
     .alias('version', 'v')
@@ -89,15 +91,23 @@ var _ = require('lodash'),
         .example('$0 config -e production', 'returns a list of config variables for the production environment')
         .argv;
 
-      printEnvironment(null, argv.key, argv.output);
+      renv.getEnvironment()
+        .then(function(environment) {
+          printEnvironment(environment, argv.key, argv.output);
+        })
+        .catch(function(err) {
+          console.log(JSON.stringify(err));
+          console.log(chalk.red(err.message));
+          process.exit(1);
+        });
     },
-    'config:set': function() {
+    'set': function() {
       yargs.reset()
         .help('h')
         .alias('h', 'help')
-        .usage('$0 config:set key=value [key=value...] [options]')
+        .usage('$0 set key=value [key=value...] [options]')
         .demand(2, chalk.red('must provide one or many key value pairs'))
-        .example('$0 config:set BANANA=apple')
+        .example('$0 set BANANA=apple')
         .options(options);
 
       argv = yargs.argv;
@@ -117,18 +127,18 @@ var _ = require('lodash'),
           process.exit(1);
         });
     },
-    'config:unset': function() {
+    'unset': function() {
       yargs.reset()
         .help('h')
         .alias('h', 'help')
         .usage('$0 config:unset key [key...] [options]')
         .demand(2, chalk.red('must provide a key to unset'))
-        .example('$0 config:unset BANANA')
+        .example('$0 unset BANANA')
         .options(options)
 
       argv = yargs.argv;
 
-      argv._.shift(); // remove the config:set command.
+      argv._.shift(); // remove the set command.
 
       renv.del(argv._)
         .then(function() {
@@ -141,13 +151,13 @@ var _ = require('lodash'),
           process.exit(1);
         });
     },
-    'config:import': function() {
+    'import': function() {
       argv = yargs.reset()
         .help('h')
         .alias('h', 'help')
-        .usage('$0 config:import /path/to/file.json [options]')
+        .usage('$0 import /path/to/file.json [options]')
         .demand(2, chalk.red('must provide path to JSON file'))
-        .example('$0 config:import ./foo.json', 'load foo.json into default environment and app')
+        .example('$0 import ./foo.json', 'load foo.json into default environment and app')
         .options(_.extend(options, {
           'k': {
             alias: 'key',
@@ -164,12 +174,12 @@ var _ = require('lodash'),
         console.log(chalk.red(err.message));
       }
     },
-    'config:nuke': function() {
+    'nuke': function() {
       argv = yargs.reset()
         .help('h')
         .alias('h', 'help')
-        .usage('$0 config:nuke [options]')
-        .example('$0 config:nuke', 'Danger, Will Robinson.')
+        .usage('$0 nuke [options]')
+        .example('$0 nuke', 'Danger, Will Robinson.')
         .options(options)
         .argv;
 
@@ -193,22 +203,72 @@ var _ = require('lodash'),
         }
       });
     },
-    'config:dump': function() {
+    'dump': function() {
       argv = yargs.reset()
-        .usage('$0 config [options]')
+        .usage('$0 dump [options]')
         .help('h')
         .alias('h', 'help')
         .options(_.extend({
-          'o': {
-            alias: 'output',
-            default: 'console',
-            description: "how should the config be output (either json, or console)"
-          }
         }, options))
-        .example('$0 config -e production', 'returns a list of config variables for the production environment')
+        .example('$0 dump', 'return config information for all environments')
         .argv;
 
-      printEnvironment('/');
+      renv.getEnvironment('/')
+        .then(function(environment) {
+          printEnvironment(environment);
+        })
+        .catch(function(err) {
+          console.log(JSON.stringify(err));
+          console.log(chalk.red(err.message));
+          process.exit(1);
+        });
+    },
+    'merge': function() {
+      argv = yargs.reset()
+        .usage('$0 merge [options]')
+        .help('h')
+        .alias('h', 'help')
+        .options(_.extend({
+          'application2': {
+            demand: true,
+            describe: 'merge configuration from this application'
+          },
+          'f': {
+            alias: 'format',
+            default: 'console',
+            description: "how should the config be output (either json, or console)"
+          },
+          'k': {
+            alias: 'key',
+            description: "output configuration for a key on an inner object"
+          },
+          'o': {
+            alias: 'output',
+            description: "output configuration to a file, rather than standard out"
+          }
+        }, options))
+        .example('$0 merge --application bar --application2 foo', "merge configuration from application 'foo' into application 'bar'")
+        .demand('application2')
+        .argv;
+
+        var renv2 = new REnv({
+          environment: argv.environment,
+          application: argv.application2,
+          etcd: {
+            ssloptions: ssloptions,
+            hosts: argv.hosts
+          }
+        });
+
+        renv.merge(renv2)
+          .then(function(environment) {
+            printEnvironment(environment, argv.key, argv.output);
+          })
+          .catch(function(err) {
+            console.log(JSON.stringify(err));
+            console.log(chalk.red(err.message));
+            process.exit(1);
+          });
     }
   };
 
@@ -245,31 +305,23 @@ if (command && commands[command]) {
 }
 
 // recursively print an environment.
-function printEnvironment(key, path, outputFile) {
-  renv.getEnvironment(key)
-    .then(function(environment) {
-      // print sub-objects in an environment.
-      if (path) environment = traverse(environment).get(path.split('.'));
-      path = path ? '.' + path : '';
+function printEnvironment(environment, path, outputFile) {
+  // print sub-objects in an environment.
+  if (path) environment = traverse(environment).get(path.split('.'));
+  path = path ? '.' + path : '';
 
-      if (argv.format === 'json') {
-        var json = JSON.stringify(environment, null, 2);
-        if (outputFile) fs.writeFileSync(outputFile, json, 'utf-8');
-        else console.log(JSON.stringify(environment, null, 2));
-      } else {
-        environment = _.mapValues(environment, function(v) {
-          return util.inspect(v, {colors: true});
-        });
-        console.log(chalk.blue('==> ') + chalk.bold(renv.environment + path));
-        console.log(columnify(environment, {showHeaders: false, config: {
-          key: {minWidth: parseInt(width * 0.4), maxWidth: parseInt(width * 0.4)},
-          value: {minWidth: parseInt(width * 0.6), maxWidth: parseInt(width * 0.6)},
-        }}));
-      }
-    })
-    .catch(function(err) {
-      console.log(JSON.stringify(err));
-      console.log(chalk.red(err.message));
-      process.exit(1);
+  if (argv.format === 'json') {
+    var json = JSON.stringify(environment, null, 2);
+    if (outputFile) fs.writeFileSync(outputFile, json, 'utf-8');
+    else console.log(JSON.stringify(environment, null, 2));
+  } else {
+    environment = _.mapValues(environment, function(v) {
+      return util.inspect(v, {colors: true});
     });
+    console.log(chalk.blue('==> ') + chalk.bold(renv.environment + path));
+    console.log(columnify(environment, {showHeaders: false, config: {
+      key: {minWidth: parseInt(width * 0.4), maxWidth: parseInt(width * 0.4)},
+      value: {minWidth: parseInt(width * 0.6), maxWidth: parseInt(width * 0.6)},
+    }}));
+  }
 }

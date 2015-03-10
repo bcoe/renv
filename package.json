@@ -39,6 +39,7 @@
     "bluebird": "^2.9.12",
     "chalk": "^0.5.1",
     "columnify": "^1.4.1",
+    "deep-extend": "^0.3.2",
     "inquirer": "^0.8.0",
     "lodash": "^3.3.0",
     "node-etcd": "^3.0.2",
@@ -46,14 +47,14 @@
     "rc": "^0.6.0",
     "traverse": "^0.6.6",
     "window-size": "^0.1.0",
-    "yargs": "^3.3.1"
+    "yargs": "^3.5.3"
   },
   "devDependencies": {
     "babel": "^4.4.3",
     "blanket": "^1.1.6",
     "chai": "^2.0.0",
     "coveralls": "^2.11.2",
-    "mocha": "^2.1.0",
+    "mocha": "2.1.0",
     "mocha-lcov-reporter": "0.0.1",
     "mocoverage": "^1.0.0"
   }
