@@ -209,13 +209,22 @@ var _ = require('lodash'),
         .help('h')
         .alias('h', 'help')
         .options(_.extend({
+          'f': {
+            alias: 'format',
+            default: 'console',
+            description: "how should the config be output (either json, or console)"
+          },
+          'o': {
+            alias: 'output',
+            description: "output configuration to a file, rather than standard out"
+          }
         }, options))
         .example('$0 dump', 'return config information for all environments')
         .argv;
 
       renv.getEnvironment('/')
         .then(function(environment) {
-          printEnvironment(environment);
+          printEnvironment(environment, null, argv.output);
         })
         .catch(function(err) {
           console.log(JSON.stringify(err));
@@ -310,7 +319,7 @@ function printEnvironment(environment, path, outputFile) {
   if (path) environment = traverse(environment).get(path.split('.'));
   path = path ? '.' + path : '';
 
-  if (argv.format === 'json') {
+  if (argv.format === 'json' || outputFile) {
     var json = JSON.stringify(environment, null, 2);
     if (outputFile) fs.writeFileSync(outputFile, json, 'utf-8');
     else console.log(JSON.stringify(environment, null, 2));
