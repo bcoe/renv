@@ -2,3 +2,5 @@
 node_modules
 renv.js
 .renvrc
+.nyc_output
+coverage
