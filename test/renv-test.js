@@ -1,7 +1,7 @@
 var should = require('chai').should(),
     expect = require('chai').expect,
     fs = require('fs'),
-    REnv = require('../');
+    REnv = require('../index.js');
 
 describe('Renv', function() {
   var renv = new REnv(),
