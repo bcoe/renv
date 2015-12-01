@@ -4,7 +4,7 @@
   "description": "a command line interface for managing remote configuration, powered by etcd",
   "main": "renv.js",
   "scripts": {
-    "test": "nyc --babel mocha --check-leaks --timeout 5000",
+    "test": "nyc --require babel-core/register mocha --check-leaks --timeout 5000",
     "prepublish": "babel index.js > renv.js"
   },
   "bin": "./bin/renv.js",
@@ -55,6 +55,6 @@
     "chai": "^3.4.1",
     "coveralls": "^2.11.2",
     "mocha": "^2.3.4",
-    "nyc": "^4.0.0-alpha"
+    "nyc": "^4.0.1"
   }
 }
